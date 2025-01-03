@@ -1,4 +1,4 @@
-package com.example.lojapdm.data.model
+package com.example.lojapdm.domain.model
 
 data class Carro(
     val id: String = "",

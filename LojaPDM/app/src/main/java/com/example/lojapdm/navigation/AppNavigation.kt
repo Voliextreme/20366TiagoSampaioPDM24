@@ -6,9 +6,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.lojapdm.ui.screen.AuthScreen
 import com.example.lojapdm.ui.screens.*
 import com.example.lojapdm.viewmodel.AuthViewModel
 import com.example.lojapdm.viewmodel.CarViewModel
+import com.example.lojapdm.viewmodel.UserViewModel
 
 // Define as rotas
 sealed class Screen(val route: String) {
@@ -22,36 +24,30 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation(
     authViewModel: AuthViewModel,
-    carViewModel: CarViewModel
+    carViewModel: CarViewModel,
+    userViewModel: UserViewModel
 ) {
     val navController: NavHostController = rememberNavController()
 
-    NavHost(
-        navController = navController,
-        startDestination = if (authViewModel.currentUser != null) Screen.Home.route else Screen.Auth.route
-    ) {
-        // Tela de Autenticação
-        composable(Screen.Auth.route) {
-            AuthScreen(
+    NavHost(navController = navController, startDestination = "auth") {
+        composable("auth") {
+            AuthScreen(navController = navController, userViewModel, authViewModel = authViewModel)
+        }
+        composable("home") {
+            HomeScreen(
                 navController = navController,
+                carViewModel = carViewModel,
                 authViewModel = authViewModel
             )
         }
-
-        // Tela Principal
-        composable(Screen.Home.route) {
-            HomeScreen(
-                navController = navController,
-                carViewModel = carViewModel
-            )
+        composable("addCar") {
+            AddCarScreen(navController = navController, carViewModel = carViewModel)
         }
-
-        // Tela de Detalhes do Carro
-        composable(Screen.CarDetail.route) { backStackEntry ->
-            val carroId = backStackEntry.arguments?.getString("carroId") ?: ""
+        composable("carDetail/{carId}") { backStackEntry ->
+            val carId = backStackEntry.arguments?.getString("carId")?: ""
             CarDetailScreen(
                 navController = navController,
-                carroId = carroId,
+                carId = carId,
                 carViewModel = carViewModel
             )
         }
