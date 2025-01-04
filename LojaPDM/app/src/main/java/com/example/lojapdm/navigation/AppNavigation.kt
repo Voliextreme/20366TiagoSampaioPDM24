@@ -1,7 +1,6 @@
 package com.example.lojapdm.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,9 +15,7 @@ import com.example.lojapdm.viewmodel.UserViewModel
 sealed class Screen(val route: String) {
     object Auth : Screen("auth")
     object Home : Screen("home")
-    object CarDetail : Screen("carDetail/{carroId}") {
-        fun createRoute(carroId: String) = "carDetail/$carroId"
-    }
+
 }
 
 @Composable
@@ -38,17 +35,6 @@ fun AppNavigation(
                 navController = navController,
                 carViewModel = carViewModel,
                 authViewModel = authViewModel
-            )
-        }
-        composable("addCar") {
-            AddCarScreen(navController = navController, carViewModel = carViewModel)
-        }
-        composable("carDetail/{carId}") { backStackEntry ->
-            val carId = backStackEntry.arguments?.getString("carId")?: ""
-            CarDetailScreen(
-                navController = navController,
-                carId = carId,
-                carViewModel = carViewModel
             )
         }
     }
