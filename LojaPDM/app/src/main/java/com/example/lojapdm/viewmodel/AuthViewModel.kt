@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lojapdm.data.repository.AuthRepository
 import com.example.lojapdm.data.repository.UserRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,6 +19,11 @@ class AuthViewModel(
 
     private val _isLoggedIn = MutableStateFlow(authRepository.isLoggedIn())
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
+
+    private val auth = FirebaseAuth.getInstance()
+
+    val userId: String?
+        get() = auth.currentUser?.uid
 
     init {
         // Check if a user is already logged in when the ViewModel is created

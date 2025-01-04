@@ -11,7 +11,8 @@ class CarRepository {
     suspend fun getAllCars(): List<Car> {
         return try {
             carCollection.get().await().documents.mapNotNull { document ->
-                document.toObject(Car::class.java)
+                val car = document.toObject(Car::class.java)
+                car?.copy(id = document.id)
             }
         } catch (e: Exception) {
             emptyList()
