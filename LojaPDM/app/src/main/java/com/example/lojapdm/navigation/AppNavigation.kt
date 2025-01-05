@@ -9,20 +9,16 @@ import com.example.lojapdm.ui.screen.AuthScreen
 import com.example.lojapdm.ui.screens.*
 import com.example.lojapdm.viewmodel.AuthViewModel
 import com.example.lojapdm.viewmodel.CarViewModel
+import com.example.lojapdm.viewmodel.CartViewModel
 import com.example.lojapdm.viewmodel.UserViewModel
 
-// Define as rotas
-sealed class Screen(val route: String) {
-    object Auth : Screen("auth")
-    object Home : Screen("home")
-
-}
 
 @Composable
 fun AppNavigation(
     authViewModel: AuthViewModel,
     carViewModel: CarViewModel,
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    cartViewModel: CartViewModel
 ) {
     val navController: NavHostController = rememberNavController()
 
@@ -35,6 +31,12 @@ fun AppNavigation(
                 navController = navController,
                 carViewModel = carViewModel,
                 authViewModel = authViewModel
+            )
+        }
+        composable("cart") {
+            CartScreen(
+                navController = navController,
+                cartViewModel = cartViewModel
             )
         }
     }
