@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.*
@@ -54,8 +55,9 @@ fun HomeScreen(
                                 }
                             }
                         }
-                    ) {
-                        IconButton(onClick = {  navController.navigate("cart") }){
+                    )
+                    {
+                        IconButton(onClick = { navController.navigate("cart") }) {
                             Icon(
                                 imageVector = Icons.Rounded.ShoppingCart,
                                 contentDescription = "Shopping cart"

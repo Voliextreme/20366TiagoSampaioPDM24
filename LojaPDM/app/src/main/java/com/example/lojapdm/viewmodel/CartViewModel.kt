@@ -24,6 +24,10 @@ class CartViewModel(private val repository: CartRepository = CartRepository()) :
     private val _ownerName = MutableStateFlow<String>("")
     val ownerName: StateFlow<String> = _ownerName
 
+    private val _sharedUserNames = MutableStateFlow<List<String>>(emptyList())
+    val sharedUserNames: StateFlow<List<String>> = _sharedUserNames
+
+
     // Create or fetch the user's cart
     fun createOrFetchCart() {
         val ownerId = FirebaseAuth.getInstance().currentUser?.uid
@@ -48,7 +52,6 @@ class CartViewModel(private val repository: CartRepository = CartRepository()) :
                 try {
                     val fetchedCart = repository.getCart(cartId)
                     _cart.value = fetchedCart
-                    println("Cart fetched: $fetchedCart")
                 } catch (e: Exception) {
                     println("Error fetching cart: ${e.message}")
                 }
@@ -94,6 +97,7 @@ class CartViewModel(private val repository: CartRepository = CartRepository()) :
                             _cart.value = it.copy(id = cartSnapshot.documents.first().id)
                             fetchOwnerName(it.ownerId)
                             fetchCarsInCart(it.carIds)
+                            fetchSharedUserNames(it.userIds)
                         }
                     } else {
                         println("No cart found for the current user.")
@@ -126,18 +130,88 @@ class CartViewModel(private val repository: CartRepository = CartRepository()) :
 
     }
 
+    fun addUserToCartByEmail(cartId: String, email: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val userQuery = db.collection("users")
+                    .whereEqualTo("email", email)
+                    .get()
+                    .await()
+
+                if (userQuery.isEmpty) {
+                    println("No user found with email: $email")
+                    onResult(false) // Trigger failure callback
+                } else {
+                    val userDoc = userQuery.documents.first()
+                    val userId = userDoc.id
+
+                    val cartDocRef = db.collection("carts").document(cartId)
+                    val cartSnapshot = cartDocRef.get().await()
+
+                    if (cartSnapshot.exists()) {
+                        val cart = cartSnapshot.toObject(Cart::class.java)
+                        cart?.let {
+                            val updatedUserIds = it.userIds.toMutableList().apply {
+                                add(userId)
+                            }
+                            cartDocRef.update("userIds", updatedUserIds).await()
+                            fetchSharedUserNames(updatedUserIds)
+                            onResult(true) // Trigger success callback
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error adding user to cart: ${e.message}")
+                onResult(false) // Trigger failure callback
+            }
+        }
+    }
+
+
+
     fun getTotalPrice(): Double {
         return _carsInCart.value.sumOf { it.price}
     }
-/*
-    // Remove car from cart
+
+    fun fetchSharedUserNames(userIds: List<String>) {
+        viewModelScope.launch {
+            val db = FirebaseFirestore.getInstance()
+            val sharedUserNames = mutableListOf<String>()
+
+            try {
+                userIds.forEach { userId ->
+                    val userDoc = db.collection("users").document(userId).get().await()
+                    val userName = userDoc.getString("name") ?: "Unknown User"
+                    Log.e("User", userName)
+                    sharedUserNames.add(userName)
+                }
+                _sharedUserNames.value = sharedUserNames
+                println("Shared user names updated: $sharedUserNames")
+            } catch (e: Exception) {
+                println("Error fetching shared user names: ${e.message}")
+            }
+        }
+    }
+
     fun removeCarFromCart(carId: String) {
         val cartId = _cart.value?.id
         if (cartId != null) {
             viewModelScope.launch {
                 try {
-                    repository.removeCarFromCart(cartId, carId)
-                    fetchCart(cartId)
+                    val updatedCart = repository.removeCarFromCart(cartId, carId)
+                    if (updatedCart != null) {
+                        _cart.value = updatedCart // Update the cart state
+
+                        // Fetch updated car details
+                        val carDetails = updatedCart.carIds.mapNotNull { carId ->
+                            repository.getCarDetails(carId)  // Fetch each car's details
+                        }
+
+                        _carsInCart.value = carDetails // Update with List<Car>
+                    } else {
+                        println("Failed to refresh the cart after removing the car.")
+                    }
                 } catch (e: Exception) {
                     println("Error removing car from cart: ${e.message}")
                 }
@@ -147,20 +221,4 @@ class CartViewModel(private val repository: CartRepository = CartRepository()) :
         }
     }
 
-    // Share the cart with another user
-    fun shareCartWithUser(userId: String) {
-        val cartId = _cart.value?.id
-        if (cartId != null) {
-            viewModelScope.launch {
-                try {
-                    repository.shareCartWithUser(cartId, userId)
-                    fetchCart(cartId)
-                } catch (e: Exception) {
-                    println("Error sharing cart: ${e.message}")
-                }
-            }
-        } else {
-            println("No cart found to share.")
-        }
-    }*/
 }
