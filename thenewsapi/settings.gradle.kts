@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "thenewsapi"
 include(":app")
+ 
