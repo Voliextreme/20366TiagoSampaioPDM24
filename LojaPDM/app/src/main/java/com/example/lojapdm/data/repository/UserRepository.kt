@@ -33,7 +33,6 @@ class UserRepository {
         val existingUser = getUserByEmail(email)
 
         if (existingUser != null) {
-            // Explicitly define the failure type as Unit
             return Result.failure<Unit>(Exception("Email is already in use"))
         }
 
@@ -46,10 +45,8 @@ class UserRepository {
                 usersCollection.document(userId).set(user).await()
                 return Result.success(Unit)
             }
-            // Explicitly define the failure type as Unit
             return Result.failure<Unit>(Exception("Error registering user"))
         } catch (e: Exception) {
-            // Explicitly define the failure type as Unit
             return Result.failure<Unit>(e)
         }
     }

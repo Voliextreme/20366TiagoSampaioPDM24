@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lojapdm.viewmodel.AuthViewModel
@@ -18,7 +19,6 @@ fun AuthScreen(
     userViewModel: UserViewModel,
     authViewModel: AuthViewModel
 ) {
-    // Observe login state
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     // If the user is already logged in, navigate to the home screen
@@ -40,7 +40,6 @@ fun AuthScreen(
 
     val context = LocalContext.current // Get the context for Toast
 
-    // Monitor login state changes
     LaunchedEffect(loginState) {
         loginState?.let {
             if (it.isSuccess) {
@@ -54,7 +53,6 @@ fun AuthScreen(
         }
     }
 
-    // Monitor registration result
     LaunchedEffect(registrationResult) {
         registrationResult?.let {
             if (it.isSuccess) {
@@ -75,7 +73,6 @@ fun AuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Register view - name field only shown in registration
         if (!isLogin) {
             TextField(
                 value = name,
@@ -85,7 +82,6 @@ fun AuthScreen(
             )
         }
 
-        // Common fields
         TextField(
             value = email,
             onValueChange = { email = it },
@@ -96,6 +92,7 @@ fun AuthScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         )
 

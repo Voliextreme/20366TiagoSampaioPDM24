@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
@@ -16,39 +17,47 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lojapdm.viewmodel.CartViewModel
 
-
 @Composable
 fun CartScreen(
     navController: NavController,
-    cartViewModel: CartViewModel
+    cartViewModel: CartViewModel,
+    cartId: String? // Pass the cartId to the ViewModel
 ) {
-    // Fetch user's cart on first composition
-    LaunchedEffect(Unit) {
-        cartViewModel.fetchCurrentUserCart()
+    // Fetch the cart details when cartId changes
+    LaunchedEffect(cartId) {
+        if (cartId != null) {
+            cartViewModel.fetchCart(cartId) // Fetch cart information based on the cartId
+        } else {
+            println("Cart ID is null")
+        }
     }
 
+    // Collect state from ViewModel
     val cart by cartViewModel.cart.collectAsState()
     val carsInCart by cartViewModel.carsInCart.collectAsState()
     val ownerName by cartViewModel.ownerName.collectAsState()
-    val sharedUserNames by cartViewModel.sharedUserNames.collectAsState() // Get the shared user names
+    val sharedUserNames by cartViewModel.sharedUserNames.collectAsState()
+    val isLoading by cartViewModel.isLoading.collectAsState() // Get the loading state
+
     var emailErrorMessage by remember { mutableStateOf<String?>(null) }
 
-
-    // State for email input
     var emailToAdd by remember { mutableStateOf("") }
-    var showEmailField by remember { mutableStateOf(false) } // To toggle the email input field
+    var showEmailField by remember { mutableStateOf(false) }
 
-    // Calculate total price whenever the list of cars in the cart changes
     val totalPrice = remember(carsInCart) { cartViewModel.getTotalPrice() }
 
-    // Display UI content
+    LaunchedEffect(Unit) {
+        cartViewModel.getAllCarts()
+    }
+
+    // Column Layout for CartScreen UI
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)
-    ) {        Text(text = "🛒 Carrinho Compartilhado", style = MaterialTheme.typography.titleLarge)
+    ) {
+        Text(text = "🛒 Carrinho Compartilhado", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Owner and Shared Users
         Text(text = "👤 Dono: $ownerName")
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -61,6 +70,7 @@ fun CartScreen(
                 Text(text = "🤝 Não compartilhado com ninguém")
             }
 
+            // Button to show the email input field
             IconButton(onClick = { showEmailField = !showEmailField }) {
                 Icon(
                     imageVector = Icons.Default.Share,
@@ -69,7 +79,7 @@ fun CartScreen(
             }
         }
 
-        // Email Input
+        // Email field and error message for adding a user
         if (showEmailField) {
             OutlinedTextField(
                 value = emailToAdd,
@@ -92,32 +102,30 @@ fun CartScreen(
                     cart?.id?.let {
                         cartViewModel.addUserToCartByEmail(it, emailToAdd) { success ->
                             if (success) {
-                                emailToAdd = "" // Reset email input field
-                                showEmailField = false // Hide the email input after submission
+                                emailToAdd = ""
+                                showEmailField = false
                                 emailErrorMessage = null
                             } else {
-                                emailErrorMessage =
-                                    "Email não encontrado no sistema. Tente novamente."
+                                emailErrorMessage = "Email não encontrado no sistema. Tente novamente."
                             }
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Adicionar ao carrinho")
+                Text("Partilhar o carrinho")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Cars in Cart
         Text(text = "🚗 Carros no Carrinho:")
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(carsInCart) { car ->
                 CarItem(
                     car = car,
                     onRemoveClick = {
-                        cartViewModel.removeCarFromCart(car.id)
+                        cartViewModel.removeCarFromCart(cart?.id ?: "", car.id)
                     }
                 )
             }
@@ -139,24 +147,46 @@ fun CartScreen(
         }
     }
 
+    // Control the visibility of the next/previous navigation arrows
     Box(modifier = Modifier.fillMaxSize()) {
-        // Your other content goes here
+        if (cartViewModel.userCartIds.isNotEmpty() && cartViewModel.currentCartIndex < cartViewModel.userCartIds.size - 1) {
+            IconButton(
+                onClick = {
+                    cartViewModel.navigateToNextCart()
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Next Cart",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
 
-        // The IconButton positioned to the right-center
-        IconButton(
-            onClick = { navController.navigate("NextScreen") },
-            modifier = Modifier
-                .align(Alignment.CenterEnd) // Positioned at center-right
-                .padding(end = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Próxima Tela",
-                tint = MaterialTheme.colorScheme.primary
-            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (cartViewModel.userCartIds.isNotEmpty() && cartViewModel.currentCartIndex > 0) {
+            IconButton(
+                onClick = {
+                    cartViewModel.navigateToPreviousCart()
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Previous Cart",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
+
 
 
 @Composable

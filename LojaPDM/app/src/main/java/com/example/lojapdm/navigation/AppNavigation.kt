@@ -12,7 +12,6 @@ import com.example.lojapdm.viewmodel.CarViewModel
 import com.example.lojapdm.viewmodel.CartViewModel
 import com.example.lojapdm.viewmodel.UserViewModel
 
-
 @Composable
 fun AppNavigation(
     authViewModel: AuthViewModel,
@@ -24,19 +23,26 @@ fun AppNavigation(
 
     NavHost(navController = navController, startDestination = "auth") {
         composable("auth") {
-            AuthScreen(navController = navController, userViewModel, authViewModel = authViewModel)
+            AuthScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                authViewModel = authViewModel
+            )
         }
         composable("home") {
             HomeScreen(
                 navController = navController,
                 carViewModel = carViewModel,
-                authViewModel = authViewModel
+                authViewModel = authViewModel,
+                cartViewModel = cartViewModel
             )
         }
-        composable("cart") {
+        composable("cart/{cartId}") { backStackEntry ->
+            val cartId = backStackEntry.arguments?.getString("cartId")
             CartScreen(
                 navController = navController,
-                cartViewModel = cartViewModel
+                cartViewModel = cartViewModel,
+                cartId = cartId
             )
         }
     }
